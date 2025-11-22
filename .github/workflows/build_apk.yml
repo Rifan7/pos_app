@@ -1,44 +1,58 @@
-# Nama workflow yang akan tampil di halaman Actions
 name: Build and Release APK
 
-# Kapan workflow ini dijalankan?
-# Dalam kasus ini, setiap ada 'push' ke branch 'main'
 on:
   push:
     branches:
       - main
 
-# Tugas-tugas yang akan dijalankan
 jobs:
   build:
-    # Menjalankan tugas di mesin virtual dengan sistem operasi Ubuntu
     runs-on: ubuntu-latest
+    permissions:
+      # Berikan izin untuk membuat release
+      contents: write
 
-    # Langkah-langkah yang akan dijalankan secara berurutan
     steps:
-      # Langkah 1: Mengambil kode dari repository
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Langkah 2: Menginstall Flutter SDK
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 'stable' # Gunakan versi stabil Flutter
+          flutter-version: 'stable'
 
-      # Langkah 3: Menginstall dependensi (packages)
       - name: Install dependencies
         run: flutter pub get
 
-      # Langkah 4: Membuild file APK dalam mode release
+      # Langkah baru: Baca versi dari pubspec.yaml
+      - name: Get Version
+        id: get_version
+        run: echo "version=$(flutter pub deps | grep pos_app | awk '{print $2}')" >> $GITHUB_OUTPUT
+
       - name: Build APK
         run: flutter build apk --release
 
-      # Langkah 5: Mengupload file APK yang sudah jadi sebagai 'artifact'
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      # Langkah baru: Buat GitHub Release dan unggah APK
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          # Nama artifact yang akan ditampilkan
-          name: pos-app-apk
-          # Path ke file APK yang ingin diupload
-          path: build/app/outputs/flutter-apk/app-release.apk
+          tag_name: v${{ steps.get_version.outputs.version }}
+          release_name: Pos App v${{ steps.get_version.outputs.version }}
+          body: |
+            Changes in this Release:
+            - Automatic build from commit ${{ github.sha }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: build/app/outputs/flutter-apk/app-release.apk
+          asset_name: pos-app-v${{ steps.get_version.outputs.version }}.apk
+          asset_content_type: application/vnd.android.package-archive
