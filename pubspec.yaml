@@ -87,3 +87,12 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.1.0              # Untuk melakukan request ke API GitHub
+  package_info_plus: ^4.2.0  # Untuk mendapatkan info versi aplikasi
+  path_provider: ^2.1.1      # Untuk menyimpan file APK yang diunduh
+  version: ^3.0.2           # Untuk membandingkan versi dengan mudah
+  # ... dependensi lainnya
