@@ -25,7 +25,7 @@ class _PosAppState extends State<PosApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'POS App',
+      title: 'Rifan App',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.indigo,
