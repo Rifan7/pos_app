@@ -1,4 +1,4 @@
-import 'dart:convert'; // <-- Baris ini yang ditambahkan
+import 'dart:convert'; // Pastikan ini ada
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -19,15 +19,13 @@ class UpdateService {
 
       // 2. Ambil data release terbaru dari GitHub API
       final url = Uri.parse(
-        'https://api.github.com/repos/$_repoOwner/$_repoName/releases/latest',
-      );
+          'https://api.github.com/repos/$_repoOwner/$_repoName/releases/latest');
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
         final release = json.decode(response.body);
-        final latestVersionString = release['tag_name'].toString().substring(
-              1,
-            ); // Hilangkan 'v'
+        final latestVersionString =
+            release['tag_name'].toString().substring(1); // Hilangkan 'v'
         final latestVersion = Version.parse(latestVersionString);
         final downloadUrl = release['assets'][0]['browser_download_url'];
         final apkName = release['assets'][0]['name'];
@@ -35,7 +33,11 @@ class UpdateService {
         // 3. Bandingkan versi
         if (latestVersion > currentVersion) {
           // 4. Jika ada versi baru, tampilkan dialog
-          _showUpdateDialog(context, latestVersionString, downloadUrl, apkName);
+          // Tambahkan pemeriksaan mounted di sini
+          if (context.mounted) {
+            _showUpdateDialog(
+                context, latestVersionString, downloadUrl, apkName);
+          }
         }
       } else {
         // Handle error
@@ -46,20 +48,15 @@ class UpdateService {
     }
   }
 
-  static void _showUpdateDialog(
-    BuildContext context,
-    String newVersion,
-    String downloadUrl,
-    String apkName,
-  ) {
+  static void _showUpdateDialog(BuildContext context, String newVersion,
+      String downloadUrl, String apkName) {
     showDialog(
       context: context,
-      barrierDismissible: false, // Tidak bisa ditutup dengan klik di luar
+      barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         title: const Text('Pembaruan Tersedia!'),
         content: Text(
-          'Versi terbaru ($newVersion) sudah tersedia. Silakan perbarui aplikasi Anda.',
-        ),
+            'Versi terbaru ($newVersion) sudah tersedia. Silakan perbarui aplikasi Anda.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
@@ -78,10 +75,7 @@ class UpdateService {
   }
 
   static Future<void> _downloadAndInstall(
-    BuildContext context,
-    String url,
-    String fileName,
-  ) async {
+      BuildContext context, String url, String fileName) async {
     // Tampilkan indikator progress
     showDialog(
       context: context,
@@ -105,20 +99,26 @@ class UpdateService {
       final file = File(path);
       await file.writeAsBytes(response.bodyBytes);
 
-      Navigator.of(context).pop(); // Tutup dialog "Mengunduh"
+      // PERBAIKAN: Tambahkan pemeriksaan mounted sebelum menggunakan context
+      if (context.mounted) {
+        Navigator.of(context).pop(); // Tutup dialog "Mengunduh"
 
-      // Trigger proses instalasi
-      _installApk(path);
+        // Trigger proses instalasi
+        _installApk(path, context);
+      }
     } catch (e) {
-      Navigator.of(context).pop(); // Tutup dialog "Mengunduh"
-      debugPrint('Error saat mengunduh: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Gagal mengunduh pembaruan.')),
-      );
+      // PERBAIKAN: Tambahkan pemeriksaan mounted
+      if (context.mounted) {
+        Navigator.of(context).pop(); // Tutup dialog "Mengunduh"
+        debugPrint('Error saat mengunduh: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Gagal mengunduh pembaruan.')),
+        );
+      }
     }
   }
 
-  static void _installApk(String filePath) {
+  static void _installApk(String filePath, BuildContext context) {
     // Untuk Android, kita menggunakan Intent untuk membuka file APK
     // Implementasi ini memerlukan plugin atau platform channel yang lebih kompleks.
     // Sebagai solusi sederhana, kita bisa buka file tersebut dan biarkan sistem Android menanganinya.
@@ -126,7 +126,12 @@ class UpdateService {
     // Berikut adalah contoh sederhana yang mungkin tidak bekerja di semua versi Android.
     // Untuk solusi yang lebih robust, pertimbangkan untuk menggunakan `install_plugin`.
     debugPrint('APK tersimpan di: $filePath. Silakan install secara manual.');
-    // Tambahkan notifikasi ke user bahwa file sudah diunduh
-    // dan mereka perlu membukanya dari folder Downloads atau menggunakan file manager.
+
+    // PERBAIKAN: Tambahkan pemeriksaan mounted
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('APK terunduh. Silakan buka dari $filePath')),
+      );
+    }
   }
 }
