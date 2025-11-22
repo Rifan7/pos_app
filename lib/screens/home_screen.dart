@@ -39,13 +39,12 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  int get totalItemCount => _cartItems.fold(0, (sum, item) => sum + item.quantity);
+  int get totalItemCount =>
+      _cartItems.fold(0, (sum, item) => sum + item.quantity);
 
   void _navigateToCart() {
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (ctx) => CartScreen(cartItems: _cartItems),
-      ),
+      MaterialPageRoute(builder: (ctx) => CartScreen(cartItems: _cartItems)),
     );
   }
 
@@ -77,10 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     child: Text(
                       '$totalItemCount',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                      ),
+                      style: const TextStyle(color: Colors.white, fontSize: 10),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -101,10 +97,7 @@ class _HomeScreenState extends State<HomeScreen> {
           itemCount: mockProducts.length,
           itemBuilder: (ctx, index) {
             final product = mockProducts[index];
-            return ProductCard(
-              product: product,
-              onAdd: _addToCart,
-            );
+            return ProductCard(product: product, onAdd: _addToCart);
           },
         ),
       ),
