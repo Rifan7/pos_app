@@ -1,0 +1,44 @@
+# Nama workflow yang akan tampil di halaman Actions
+name: Build and Release APK
+
+# Kapan workflow ini dijalankan?
+# Dalam kasus ini, setiap ada 'push' ke branch 'main'
+on:
+  push:
+    branches:
+      - main
+
+# Tugas-tugas yang akan dijalankan
+jobs:
+  build:
+    # Menjalankan tugas di mesin virtual dengan sistem operasi Ubuntu
+    runs-on: ubuntu-latest
+
+    # Langkah-langkah yang akan dijalankan secara berurutan
+    steps:
+      # Langkah 1: Mengambil kode dari repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Langkah 2: Menginstall Flutter SDK
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 'stable' # Gunakan versi stabil Flutter
+
+      # Langkah 3: Menginstall dependensi (packages)
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Langkah 4: Membuild file APK dalam mode release
+      - name: Build APK
+        run: flutter build apk --release
+
+      # Langkah 5: Mengupload file APK yang sudah jadi sebagai 'artifact'
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          # Nama artifact yang akan ditampilkan
+          name: pos-app-apk
+          # Path ke file APK yang ingin diupload
+          path: build/app/outputs/flutter-apk/app-release.apk
