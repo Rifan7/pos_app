@@ -1,26 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:pos_app/screens/home_screen.dart';
-import 'package:pos_app/services/update_service.dart';
+import 'package:pos_app/services/update_service.dart'; // Pastikan file ini berisi class AppUpdater
 
 void main() {
   runApp(const PosApp());
 }
 
-class PosApp extends StatefulWidget {
+class PosApp extends StatelessWidget {
   const PosApp({super.key});
-
-  @override
-  State<PosApp> createState() => _PosAppState();
-}
-
-class _PosAppState extends State<PosApp> {
-  @override
-  void initState() {
-    super.initState();
-    // Jangan jalankan checkForUpdate di sini langsung,
-    // karena `context` belum tersedia.
-    // Kita akan menjalankannya dari widget pertama yang dibangun.
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +23,7 @@ class _PosAppState extends State<PosApp> {
   }
 }
 
-// Widget wrapper untuk menjalankan pengecekan update
+// Wrapper untuk melakukan pengecekan update
 class HomeScreenWrapper extends StatefulWidget {
   const HomeScreenWrapper({super.key});
 
@@ -45,14 +32,20 @@ class HomeScreenWrapper extends StatefulWidget {
 }
 
 class _HomeScreenWrapperState extends State<HomeScreenWrapper> {
+  bool _checkedUpdate = false;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Jalankan pengecekan update saat widget pertama kali dibangun
-    // dan context sudah tersedia.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      UpdateService.checkForUpdate(context);
-    });
+
+    // Pastikan checkUpdate hanya berjalan sekali
+    if (!_checkedUpdate) {
+      _checkedUpdate = true;
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        AppUpdater.checkUpdate(context); // UBAH INI
+      });
+    }
   }
 
   @override
