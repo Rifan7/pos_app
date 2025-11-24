@@ -1,137 +1,61 @@
-import 'dart:convert'; // Pastikan ini ada
-import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:version/version.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-class UpdateService {
-  // Ganti dengan informasi repository Anda
-  static const String _repoOwner = 'Rifan7';
-  static const String _repoName = 'pos_app';
+class AppUpdater {
+  static const String versionUrl =
+      "https://raw.githubusercontent.com/Rifan7/pos_app/main/version.json";
 
-  static Future<void> checkForUpdate(BuildContext context) async {
+  static Future<void> checkUpdate(BuildContext context) async {
     try {
-      // 1. Dapatkan versi aplikasi yang terinstall
-      final packageInfo = await PackageInfo.fromPlatform();
-      final currentVersion = Version.parse(packageInfo.version);
+      PackageInfo info = await PackageInfo.fromPlatform();
+      String currentVersion = info.version;
 
-      // 2. Ambil data release terbaru dari GitHub API
-      final url = Uri.parse(
-          'https://api.github.com/repos/$_repoOwner/$_repoName/releases/latest');
-      final response = await http.get(url);
+      final response = await http.get(Uri.parse(versionUrl));
+      if (response.statusCode != 200) return;
 
-      if (response.statusCode == 200) {
-        final release = json.decode(response.body);
-        final latestVersionString =
-            release['tag_name'].toString().substring(1); // Hilangkan 'v'
-        final latestVersion = Version.parse(latestVersionString);
-        final downloadUrl = release['assets'][0]['browser_download_url'];
-        final apkName = release['assets'][0]['name'];
+      final data = jsonDecode(response.body);
+      String latestVersion = data["version"];
+      String changelog = data["changelog"];
+      String apkUrl = data["apk_url"];
 
-        // 3. Bandingkan versi
-        if (latestVersion > currentVersion) {
-          // 4. Jika ada versi baru, tampilkan dialog
-          // Tambahkan pemeriksaan mounted di sini
-          if (context.mounted) {
-            _showUpdateDialog(
-                context, latestVersionString, downloadUrl, apkName);
-          }
-        }
-      } else {
-        // Handle error
-        debugPrint('Gagal mengecek versi: ${response.statusCode}');
+      if (latestVersion != currentVersion) {
+        _showUpdateDialog(context, latestVersion, changelog, apkUrl);
       }
     } catch (e) {
-      debugPrint('Error saat mengecek update: $e');
+      print("Gagal cek update: $e");
     }
   }
 
-  static void _showUpdateDialog(BuildContext context, String newVersion,
-      String downloadUrl, String apkName) {
+  static void _showUpdateDialog(
+      BuildContext context,
+      String version,
+      String changelog,
+      String apkUrl,
+      ) {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Pembaruan Tersedia!'),
-        content: Text(
-            'Versi terbaru ($newVersion) sudah tersedia. Silakan perbarui aplikasi Anda.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Nanti Saja'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              _downloadAndInstall(context, downloadUrl, apkName);
-            },
-            child: const Text('Perbarui Sekarang'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  static Future<void> _downloadAndInstall(
-      BuildContext context, String url, String fileName) async {
-    // Tampilkan indikator progress
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => const AlertDialog(
-        content: Row(
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(width: 20),
-            Text("Mengunduh..."),
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Update $version tersedia"),
+          content: Text("Catatan perubahan:\n$changelog"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("Nanti"),
+            ),
+            TextButton(
+              onPressed: () {
+                launchUrl(Uri.parse(apkUrl), mode: LaunchMode.externalApplication);
+              },
+              child: Text("Update Sekarang"),
+            ),
           ],
-        ),
-      ),
-    );
-
-    try {
-      final directory = await getExternalStorageDirectory();
-      final path = '${directory?.path}/$fileName';
-      final response = await http.get(Uri.parse(url));
-
-      final file = File(path);
-      await file.writeAsBytes(response.bodyBytes);
-
-      // PERBAIKAN: Tambahkan pemeriksaan mounted sebelum menggunakan context
-      if (context.mounted) {
-        Navigator.of(context).pop(); // Tutup dialog "Mengunduh"
-
-        // Trigger proses instalasi
-        _installApk(path, context);
-      }
-    } catch (e) {
-      // PERBAIKAN: Tambahkan pemeriksaan mounted
-      if (context.mounted) {
-        Navigator.of(context).pop(); // Tutup dialog "Mengunduh"
-        debugPrint('Error saat mengunduh: $e');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Gagal mengunduh pembaruan.')),
         );
-      }
-    }
-  }
-
-  static void _installApk(String filePath, BuildContext context) {
-    // Untuk Android, kita menggunakan Intent untuk membuka file APK
-    // Implementasi ini memerlukan plugin atau platform channel yang lebih kompleks.
-    // Sebagai solusi sederhana, kita bisa buka file tersebut dan biarkan sistem Android menanganinya.
-    // Namun, cara terbaik adalah menggunakan `install_plugin` atau membuat `MethodChannel`.
-    // Berikut adalah contoh sederhana yang mungkin tidak bekerja di semua versi Android.
-    // Untuk solusi yang lebih robust, pertimbangkan untuk menggunakan `install_plugin`.
-    debugPrint('APK tersimpan di: $filePath. Silakan install secara manual.');
-
-    // PERBAIKAN: Tambahkan pemeriksaan mounted
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('APK terunduh. Silakan buka dari $filePath')),
-      );
-    }
+      },
+    );
   }
 }
