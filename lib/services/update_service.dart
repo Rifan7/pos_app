@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class AppUpdater {
@@ -10,48 +9,43 @@ class AppUpdater {
 
   static Future<void> checkUpdate(BuildContext context) async {
     try {
-      PackageInfo info = await PackageInfo.fromPlatform();
-      String currentVersion = info.version;
-
       final response = await http.get(Uri.parse(versionUrl));
-      if (response.statusCode != 200) return;
 
-      final data = jsonDecode(response.body);
-      String latestVersion = data["version"];
-      String changelog = data["changelog"];
-      String apkUrl = data["apk_url"];
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
 
-      if (latestVersion != currentVersion) {
-        _showUpdateDialog(context, latestVersion, changelog, apkUrl);
+        final latestVersion = data["version"];
+        final changelog = data["changelog"] ?? "";
+        final apkUrl = data["apk_url"];
+
+        const String currentVersion = "1.0.0"; // versi aplikasi di HP
+
+        if (latestVersion != currentVersion) {
+          _showUpdateDialog(context, latestVersion, changelog, apkUrl);
+        }
       }
     } catch (e) {
-      print("Gagal cek update: $e");
+      print("Update check error: $e");
     }
   }
 
   static void _showUpdateDialog(
-      BuildContext context,
-      String version,
-      String changelog,
-      String apkUrl,
-      ) {
+      BuildContext context, String latest, String log, String apkUrl) {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) {
+      builder: (_) {
         return AlertDialog(
-          title: Text("Update $version tersedia"),
-          content: Text("Catatan perubahan:\n$changelog"),
+          title: const Text("Update Tersedia"),
+          content: Text(
+              "Versi terbaru: $latest\n\nCatatan perubahan:\n$log\n"),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text("Nanti"),
-            ),
-            TextButton(
-              onPressed: () {
-                launchUrl(Uri.parse(apkUrl), mode: LaunchMode.externalApplication);
+              onPressed: () async {
+                await launchUrl(Uri.parse(apkUrl),
+                    mode: LaunchMode.externalApplication);
               },
-              child: Text("Update Sekarang"),
+              child: const Text("UPDATE"),
             ),
           ],
         );
