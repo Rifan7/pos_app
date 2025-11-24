@@ -1,0 +1,8 @@
+.dart_tool/
+.idea/
+.vscode/
+build/
+ios/Pods/
+.packages
+pubspec.lock
+*.iml

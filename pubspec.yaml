@@ -1,0 +1,49 @@
+# Nama aplikasi Anda
+name: pos_app
+description: A new Flutter project.
+
+# Jangan publikasikan ke pub.dev
+publish_to: 'none' 
+
+# Versi aplikasi
+version: 1.0.0+1
+
+# Lingkungan Dart yang didukung
+environment:
+  sdk: '>=2.18.0 <4.0.0' # Disarankan menggunakan versi yang lebih baru
+
+# Dependencies yang dibutuhkan aplikasi
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.2
+  url_launcher: ^6.3.0
+  http: ^1.2.0
+
+
+# Dependencies untuk pengembangan dan testing
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0 # Disarankan menggunakan versi yang lebih baru
+
+# --- HANYA SATU BLOK flutter: YANG BOLEH ADA ---
+# Semua konfigurasi Flutter (assets, fonts, dll) harus di dalam blok ini.
+flutter:
+  # Menggunakan Material Design
+  uses-material-design: true
+
+  # Untuk menambahkan aset (gambar, dll) ke aplikasi Anda
+  # assets:
+  #   - images/
+  #   - assets/data.json
+
+  # Untuk menambahkan font kustom
+  # fonts:
+  #   - family: Schyler
+  #     fonts:
+  #       - asset: fonts/Schyler-Regular.ttf
+  #       - asset: fonts/Schyler-Italic.ttf
+  #         style: italic
